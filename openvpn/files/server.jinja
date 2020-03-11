@@ -2,84 +2,50 @@
 # Managed by Salt
 # Template: {{ source }}
 
+{% include 'openvpn/files/common_opts.jinja' %}
+{%- set config = salt['pillar.get']("openvpn:{}:{}".format(type, name), {}) %}
+
+
+{%- if not (config.tls_server is defined and config.tls_server == False) %}
+{%- if not (config.secret is defined) %}
+tls-server
+{%- endif %}
+{%- endif %}
+
 {%- if config.local is defined %}
 local {{ config.local }}
-{%- endif %}
-
-{%- if config.auth is defined %}
-auth {{ config.auth }}
-{%- endif %}
-
-{%- if config.port is defined %}
-port {{ config.port }}
-{%- else %}
-port 1194
 {%- endif %}
 
 {%- if config.port_share is defined %}
 port-share {{ config.port_share }}
 {%- endif %}
 
-{%- if config.daemon is defined and config.daemon == True %}
-daemon
-{%- endif %}
-
-{%- if config.proto is defined %}
-proto {{ config.proto }}
-{%- else %}
-proto udp
-{%- endif %}
-
 {%- if config.topology is defined %}
 topology {{ config.topology }}
 {%- endif %}
 
-{%- if config.dev is defined %}
-dev {{ config.dev }}
-{%- else %}
-dev tun
-{%- endif %}
-
-{%- if config.dev_node is defined %}
-dev-node {{ config.dev_node }}
-{%- endif %}
-
-{%- if config.ca is defined %}
-ca {{ config.ca }}
-{%- else %}
-# ca is not set !
-{%- endif %}
-
-{%- if config.cert is defined %}
-cert {{ config.cert }}
-{%- else %}
-# cert is not set !
-{%- endif %}
-
-{%- if config.key is defined %}
-key {{ config.key }}
-{%- else %}
-# key is not set !
-{%- endif %}
-
-{%- if config.dh is defined %}
-dh {{ config.dh }}
-{%- else %}
-dh dh1024.pem
-{%- endif %}
-
 {%- if config.server is defined %}
 server {{ config.server }}
-{%- else %}
-{%- if config.server_bridge is defined %}
-# server_bridge defined, skipping default server directive
-{%- else %}
-server 10.8.0.0 255.255.255.0
-{%- endif %}
+{%- elif config.server_bridge is defined %}
+server-bridge {{ config.server_bridge }}
+{%- elif config.mode is defined %}
+mode {{ config.mode }}
 {%- endif %}
 
 {%- if config.ifconfig_pool is defined %}
 ifconfig-pool {{ config.ifconfig_pool }}
+{%- endif %}
+
+{%- if config.server_ipv6 is defined %}
+server-ipv6 {{ config.server_ipv6 }}
+{%- endif %}
+
+{%- if config.ifconfig_ipv6 is defined %}
+ifconfig-ipv6 {{ config.ifconfig_ipv6 }}
+{%- endif %}
+
+{%- if config.ifconfig_ipv6_pool is defined %}
+ifconfig-ipv6-pool {{ config.ifconfig_ipv6_pool }}
 {%- endif %}
 
 {%- if config.ifconfig_pool_persist is defined %}
@@ -93,12 +59,6 @@ server-bridge {{ config.server_bridge }}
 {%- if config.push is defined %}
 {%- for push in config.push %}
 push "{{ push }}"
-{%- endfor %}
-{%- endif %}
-
-{%- if config.route is defined %}
-{%- for route in config.route %}
-route {{ route }}
 {%- endfor %}
 {%- endif %}
 
@@ -118,78 +78,8 @@ client-to-client
 duplicate-cn
 {%- endif %}
 
-{%- if config.keepalive is defined %}
-keepalive {{ config.keepalive }}
-{%- endif %}
-
-{%- if config.tls_auth is defined %}
-tls-auth {{ config.tls_auth }}
-{%- endif %}
-
-{%- if config.verify_x509_name is defined %}
-verify-x509-name {{ config.verify_x509_name }}
-{%- endif %}
-
-{%- if config.ciphers is defined %}
-{%- for cipher in config.ciphers %}
-cipher "{{ cipher }}"
-{%- endfor %}
-{%- endif %}
-
-{%- if config.comp_lzo is defined and config.comp_lzo == False %}
-;comp-lzo
-{%- else %}
-comp-lzo
-{%- endif %}
-
 {%- if config.max_clients is defined %}
 max-clients {{ config.max_clients }}
-{%- endif %}
-
-{%- if config.user is defined %}
-user {{ config.user }}
-{%- else %}
-user {{ user }}
-{%- endif %}
-
-{%- if config.group is defined %}
-group {{ config.group }}
-{%- else %}
-group {{ group }}
-{%- endif %}
-
-{%- if config.persist_key is defined and config.persist_key == False %}
-;persist-key
-{%- else %}
-persist-key
-{%- endif %}
-
-{%- if config.persist_tun is defined and config.persist_tun == False %}
-;persist-tun
-{%- else %}
-persist-tun
-{%- endif %}
-
-{%- if config.status is defined %}
-status {{ config.status }}
-{%- endif %}
-
-{%- if config.log is defined %}
-log {{ config.log }}
-{%- endif %}
-
-{%- if config.log_append is defined %}
-log-append {{ config.log_append }}
-{%- endif %}
-
-{%- if config.verb is defined %}
-verb {{ config.verb }}
-{%- else %}
-verb 3
-{%- endif %}
-
-{%- if config.mute is defined %}
-mute {{ config.mute }}
 {%- endif %}
 
 {%- if config.ccd_exclusive is defined and config.ccd_exclusive == True %}
@@ -206,14 +96,31 @@ plugin {{ plugin }}
 {%- endfor %}
 {%- endif %}
 
-{%- if config.reneg_sec is defined %}
-reneg-sec {{ config.reneg_sec }}
-{%- endif %}
-
-{%- if config.tun_mtu is defined %}
-tun-mtu {{ config.tun_mtu }}
-{%- endif %}
-
 {%- if config.client_cert_not_required is defined %}
 client-cert-not-required
 {%- endif %}
+
+{%- if config.verify_client_cert is defined %}
+verify-client-cert {{ config.verify_client_cert }}
+{%- endif %}
+
+{%- if config.management is defined %}
+management {{ config.management }}
+{%- endif %}
+
+{%- if config.auth_user_pass_verify is defined %}
+auth-user-pass-verify {{ config.auth_user_pass_verify }}
+{%- endif %}
+
+{#- `false is number` and `true is number` both also return true... #}
+{%- if config.auth_gen_token is defined
+        and (config.auth_gen_token|int is sameas (config.auth_gen_token)
+             or config.auth_gen_token is sameas true) %}
+auth-gen-token{% if config.auth_gen_token is not sameas true %} {{ config.auth_gen_token|int }}{% endif %}
+{%- endif %}
+
+{%- if config.setenv is defined %}
+{%- for setenv in config.setenv %}
+setenv {{ setenv }}
+{% endfor %}
+{% endif %}
